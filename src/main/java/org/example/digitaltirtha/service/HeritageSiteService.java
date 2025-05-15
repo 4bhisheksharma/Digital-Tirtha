@@ -1,24 +1,35 @@
 package org.example.digitaltirtha.service;
 
+import org.example.digitaltirtha.dao.HeritageSiteDAO;
+import org.example.digitaltirtha.dao.impl.HeritageSiteDAOImpl;
 import org.example.digitaltirtha.model.HeritageSite;
-import org.example.digitaltirtha.model.MediaContribution;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Service class for managing heritage sites.
+ * Implements business logic and delegates data access to DAO.
  */
 public class HeritageSiteService {
-    
-    // In-memory storage for demo purposes
-    // In a real application, this would use a database
-    private Map<Long, HeritageSite> sitesMap = new HashMap<>();
-    private long nextId = 1;
-    
+
+    private HeritageSiteDAO heritageSiteDAO;
+
+    /**
+     * Constructor that initializes the DAO.
+     */
+    public HeritageSiteService() {
+        this.heritageSiteDAO = new HeritageSiteDAOImpl();
+    }
+
+    /**
+     * Constructor with DAO injection for testing.
+     * 
+     * @param heritageSiteDAO The DAO to use
+     */
+    public HeritageSiteService(HeritageSiteDAO heritageSiteDAO) {
+        this.heritageSiteDAO = heritageSiteDAO;
+    }
+
     /**
      * Creates a new heritage site.
      *
@@ -26,11 +37,9 @@ public class HeritageSiteService {
      * @return The created heritage site with ID assigned
      */
     public HeritageSite createSite(HeritageSite site) {
-        site.setId(nextId++);
-        sitesMap.put(site.getId(), site);
-        return site;
+        return heritageSiteDAO.create(site);
     }
-    
+
     /**
      * Retrieves a heritage site by ID.
      *
@@ -38,9 +47,9 @@ public class HeritageSiteService {
      * @return The heritage site, or null if not found
      */
     public HeritageSite getSiteById(Long id) {
-        return sitesMap.get(id);
+        return heritageSiteDAO.findById(id);
     }
-    
+
     /**
      * Updates an existing heritage site.
      *
@@ -48,13 +57,9 @@ public class HeritageSiteService {
      * @return The updated heritage site, or null if not found
      */
     public HeritageSite updateSite(HeritageSite site) {
-        if (sitesMap.containsKey(site.getId())) {
-            sitesMap.put(site.getId(), site);
-            return site;
-        }
-        return null;
+        return heritageSiteDAO.update(site);
     }
-    
+
     /**
      * Deletes a heritage site by ID.
      *
@@ -62,22 +67,18 @@ public class HeritageSiteService {
      * @return true if deleted, false if not found
      */
     public boolean deleteSite(Long id) {
-        if (sitesMap.containsKey(id)) {
-            sitesMap.remove(id);
-            return true;
-        }
-        return false;
+        return heritageSiteDAO.delete(id);
     }
-    
+
     /**
      * Retrieves all heritage sites.
      *
      * @return A list of all heritage sites
      */
     public List<HeritageSite> getAllSites() {
-        return new ArrayList<>(sitesMap.values());
+        return heritageSiteDAO.findAll();
     }
-    
+
     /**
      * Retrieves heritage sites by risk level.
      *
@@ -85,11 +86,9 @@ public class HeritageSiteService {
      * @return A list of heritage sites with the specified risk level
      */
     public List<HeritageSite> getSitesByRiskLevel(String riskLevel) {
-        return sitesMap.values().stream()
-                .filter(site -> riskLevel.equals(site.getRiskLevel()))
-                .collect(Collectors.toList());
+        return heritageSiteDAO.findByRiskLevel(riskLevel);
     }
-    
+
     /**
      * Retrieves heritage sites by category.
      *
@@ -97,11 +96,9 @@ public class HeritageSiteService {
      * @return A list of heritage sites with the specified category
      */
     public List<HeritageSite> getSitesByCategory(String category) {
-        return sitesMap.values().stream()
-                .filter(site -> category.equals(site.getCategory()))
-                .collect(Collectors.toList());
+        return heritageSiteDAO.findByCategory(category);
     }
-    
+
     /**
      * Records a visit to a heritage site.
      *
@@ -109,14 +106,9 @@ public class HeritageSiteService {
      * @return The updated heritage site, or null if not found
      */
     public HeritageSite recordVisit(Long siteId) {
-        HeritageSite site = sitesMap.get(siteId);
-        if (site != null) {
-            site.incrementVisitCount();
-            return site;
-        }
-        return null;
+        return heritageSiteDAO.recordVisit(siteId);
     }
-    
+
     /**
      * Records a donation to a heritage site.
      *
@@ -125,52 +117,13 @@ public class HeritageSiteService {
      * @return The updated heritage site, or null if not found
      */
     public HeritageSite recordDonation(Long siteId, double amount) {
-        HeritageSite site = sitesMap.get(siteId);
-        if (site != null) {
-            site.addDonation(amount);
-            return site;
-        }
-        return null;
+        return heritageSiteDAO.recordDonation(siteId, amount);
     }
-    
+
     /**
      * Initializes the service with sample data.
      */
     public void initWithSampleData() {
-        // Create sample heritage sites
-        HeritageSite site1 = new HeritageSite(nextId++, "Swayambhunath Stupa", 
-                "One of the oldest and most sacred Buddhist stupas in Nepal, also known as the Monkey Temple.", 
-                "Kathmandu");
-        site1.setRiskLevel("Medium");
-        site1.setCategory("Temple");
-        site1.setLatitude(27.7147);
-        site1.setLongitude(85.2904);
-        site1.setImageUrl("images/swayambhunath.jpg");
-        site1.setVirtualTourUrl("tours/swayambhunath.html");
-        
-        HeritageSite site2 = new HeritageSite(nextId++, "Patan Durbar Square", 
-                "A UNESCO World Heritage Site with ancient royal palaces, temples, and shrines.", 
-                "Lalitpur");
-        site2.setRiskLevel("High");
-        site2.setCategory("UNESCO");
-        site2.setLatitude(27.6726);
-        site2.setLongitude(85.3239);
-        site2.setImageUrl("images/patan.jpg");
-        site2.setVirtualTourUrl("tours/patan.html");
-        
-        HeritageSite site3 = new HeritageSite(nextId++, "Boudhanath Stupa", 
-                "One of the largest spherical stupas in Nepal and a UNESCO World Heritage Site.", 
-                "Kathmandu");
-        site3.setRiskLevel("Low");
-        site3.setCategory("UNESCO");
-        site3.setLatitude(27.7215);
-        site3.setLongitude(85.3620);
-        site3.setImageUrl("images/boudhanath.jpg");
-        site3.setVirtualTourUrl("tours/boudhanath.html");
-        
-        // Add sites to the map
-        sitesMap.put(site1.getId(), site1);
-        sitesMap.put(site2.getId(), site2);
-        sitesMap.put(site3.getId(), site3);
+        ((HeritageSiteDAOImpl) heritageSiteDAO).initWithSampleData();
     }
 }
